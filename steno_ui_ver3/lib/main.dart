@@ -10,7 +10,7 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   double minWidth = 750.0;
-  double minHeight = 500.0;
+  double minHeight = 550.0;
 
   // setting up minimum screen size
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
@@ -80,6 +80,13 @@ class _LandingScreenState extends State<LandingScreen> {
   late final Size _previewSize;
   late var _snapPicPath;
   bool _snappedPic = false;
+
+  List<String> selections = ["Shorthand to Longhand","Longhand to Shorthand"];
+  late String dropDownValue;
+
+  bool isStoL = true;
+
+  late String longhandInput;
 
 
   @override
@@ -189,6 +196,87 @@ class _LandingScreenState extends State<LandingScreen> {
     await CameraPlatform.instance.resumePreview(_cameraId);
   }
 
+  void getDropDownValue(){
+    dropDownValue = selections.first;
+  }
+
+  Widget _LeftButton(){
+    return Frame(
+                child: SizedBox(
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: (){
+                      if(isStoL){
+                        _takePicture();
+                        _pausePreview();
+                      }
+                      else{
+                        //code here for searching matching label
+                      }
+                    },
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
+                      overlayColor: MaterialStateProperty.all(Colors.grey[500]),
+                    ),
+                    child: isStoL ?
+                    const Icon(
+                      Icons.camera_alt,
+                      color: Colors.black,
+                    )
+                    : const Icon(
+                      Icons.upload,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              );
+  }
+
+  Widget _DropDownSelection(){
+      // String dropDownValue = selections.first;
+      getDropDownValue();
+      return SizedBox(
+        width: 400,
+        child: DropdownButtonFormField(
+        value: dropDownValue,
+        icon: const Icon(Icons.arrow_downward_outlined),
+        dropdownColor: Colors.grey[500],
+        alignment: Alignment.center,
+        elevation: 8,
+        // focusColor: Colors.grey[300],
+        decoration: InputDecoration(
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.grey[300]!)
+          )
+        ),
+        onChanged: (String? value) {
+          setState(() {
+            dropDownValue = value!;
+          });
+          //insert code here to change the page of the UI
+          if(value == selections.last){
+            isStoL = false;
+          }
+          else{
+            isStoL = true;
+          }
+        },
+        // onSaved: (String? value) {
+        //   setState(() {
+        //     dropDownValue = value!;
+        //   });
+        //   //insert code here to change the page of the UI
+        // },
+        items: selections.map<DropdownMenuItem<String>>((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
+          );
+        }).toList(),
+    ),
+      );
+  }
+
   @override 
   Widget build(BuildContext context){
     return Container(
@@ -197,27 +285,14 @@ class _LandingScreenState extends State<LandingScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           //buttons to toggle between S-L and L-S translation
-          Row(
-            children: [
-              Frame(
-                child: SizedBox(
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: (){
-                      
-                    },
-                    style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
-                      overlayColor: MaterialStateProperty.all(Colors.grey[500]),
-                    ),
-                    child: const Text(
-                      "Shorthand to Longhand"
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          Frame(
+            child: Container(
+              alignment: Alignment.center,
+              width: 500,
+              child: _DropDownSelection(),
+            ),
           ),
+          const SizedBox(height: 20,),
           // place image or cam preview here
           Frame(
             child: Container(
@@ -239,7 +314,7 @@ class _LandingScreenState extends State<LandingScreen> {
               //   },
               // ),
               // child: FittedBox(child: Icon(Icons.image)),
-              child: _initialized ?
+              child: _initialized && isStoL ?
                 AspectRatio(
                   aspectRatio: _previewSize.width/_previewSize.height, 
                   child: _snappedPic ?
@@ -257,42 +332,57 @@ class _LandingScreenState extends State<LandingScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // snap pic button
-              Frame(
-                child: SizedBox(
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: (){
-                      _takePicture();
-                      _pausePreview();
-                    },
-                    style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
-                      overlayColor: MaterialStateProperty.all(Colors.grey[500]),
-                    ),
-                    child: const Icon(
-                      Icons.camera_alt,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-              ),
+              _LeftButton(),
               const SizedBox(width: 30,),
               // translation word output
               Frame(
-                child: const SizedBox(
+                child: SizedBox(
                   height: 50,
                   width: 500,
                   child: Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Center(
-                      child: Text(
-                        'TRANSLATION',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 20,
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: isStoL ?
+                        MainAxisAlignment.spaceAround
+                        : MainAxisAlignment.spaceBetween,
+                      children: [
+                        Center(
+                          child: isStoL ?
+                          Text(
+                            isStoL ?
+                            'TRANSLATION'
+                            : 'LONGHAND INPUT',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 20,
+                            ),
+                          )
+                          : SizedBox(
+                            height: 40,
+                            width: 400,
+                            child: TextField(
+                              onChanged: (value){
+                                longhandInput = value;
+                                print(longhandInput);
+                              },
+                              // controller: TextEditingController(),
+                              decoration: const InputDecoration(
+                                label: Text("Input a word"),
+                                floatingLabelBehavior: FloatingLabelBehavior.never,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                        if(!isStoL)
+                        FloatingActionButton(
+                          onPressed: (){},
+                          backgroundColor: Colors.grey[300],
+                          hoverColor: Colors.grey[500],
+                          foregroundColor: Colors.black,
+                          child: const Icon(Icons.mic),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -335,7 +425,7 @@ class SplashScreen extends StatelessWidget{
   Widget build(BuildContext context){
     Future.delayed(
       const Duration(seconds: 3), 
-      () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const LandingScreen()))
+      () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const Scaffold(body: LandingScreen(),)))
     );
     // Future.delayed(
     //   const Duration(seconds: 3), 
@@ -394,3 +484,66 @@ class Frame extends StatelessWidget{
     );
   }
 }
+
+
+
+
+// sample code using dropdownbutton
+// import 'package:flutter/material.dart';
+
+// const List<String> list = <String>['One', 'Two', 'Three', 'Four'];
+
+// void main() => runApp(const DropdownButtonApp());
+
+// class DropdownButtonApp extends StatelessWidget {
+//   const DropdownButtonApp({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       home: Scaffold(
+//         appBar: AppBar(title: const Text('DropdownButton Sample')),
+//         body: const Center(
+//           child: DropdownButtonExample(),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// class DropdownButtonExample extends StatefulWidget {
+//   const DropdownButtonExample({super.key});
+
+//   @override
+//   State<DropdownButtonExample> createState() => _DropdownButtonExampleState();
+// }
+
+// class _DropdownButtonExampleState extends State<DropdownButtonExample> {
+//   String dropdownValue = list.first;
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return DropdownButton<String>(
+//       value: dropdownValue,
+//       icon: const Icon(Icons.arrow_downward),
+//       elevation: 16,
+//       style: const TextStyle(color: Colors.deepPurple),
+//       underline: Container(
+//         height: 2,
+//         color: Colors.deepPurpleAccent,
+//       ),
+//       onChanged: (String? value) {
+//         // This is called when the user selects an item.
+//         setState(() {
+//           dropdownValue = value!;
+//         });
+//       },
+//       items: list.map<DropdownMenuItem<String>>((String value) {
+//         return DropdownMenuItem<String>(
+//           value: value,
+//           child: Text(value),
+//         );
+//       }).toList(),
+//     );
+//   }
+// }
